@@ -15,11 +15,6 @@ export default async function Quote({
     notFound();
   }
 
-console.log(quotes)
-  return (
-    <Hero
-      quote={quotes.quote}
-      kind={quotes.kind}
-    />
-  );
+  console.log(quotes);
+  return <Hero quote={quotes.quote} kind={quotes.kind} />;
 }
