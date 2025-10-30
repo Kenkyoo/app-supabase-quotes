@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id      String   @id
+  email   String   @unique
+  name    String?
+  quotes  Quotes[] // 👈 relación 1:N
+}
+
+model Quotes {
+  id        Int       @id @default(autoincrement())
+  quote     String
+  kind      QuoteKind @default(Opinion)
+  createdAt DateTime  @default(now())
+  authorId  String?   // 👈 FK opcional
+  author    User?     @relation(fields: [authorId], references: [id])
+}
+
+enum QuoteKind {
+  Fact
+  Opinion
+}

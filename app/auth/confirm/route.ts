@@ -1,7 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { type EmailOtpType } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { type NextRequest } from "next/server";
+import { type EmailOtpType } from "@supabase/supabase-js";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -12,19 +15,30 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const supabase = await createClient();
 
-    const { error } = await supabase.auth.verifyOtp({
+    const { data: userData, error } = await supabase.auth.verifyOtp({
       type,
       token_hash,
     });
-    if (!error) {
-      // redirect user to specified redirect URL or root of app
+
+    if (!error && userData.user) {
+      const user = userData.user;
+
+      // Crear usuario en Prisma si no existe
+      await prisma.user.upsert({
+        where: { id: user.id },
+        update: {},
+        create: {
+          id: user.id,
+          email: user.email!,
+          name: user.user_metadata.full_name || null,
+        },
+      });
+
       redirect(next);
     } else {
-      // redirect the user to an error page with some instructions
       redirect(`/auth/error?error=${error?.message}`);
     }
   }
 
-  // redirect the user to an error page with some instructions
   redirect(`/auth/error?error=No token hash or type`);
 }
